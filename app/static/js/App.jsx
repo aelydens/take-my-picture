@@ -41,6 +41,7 @@ export default class App extends Component {
     this.chooseCam = this.chooseCam.bind(this)
     this.turnOnMotion = this.turnOnMotion.bind(this)
     this.addPic = this.addPic.bind(this)
+    this.turnOnsocket = this.turnOnSocket.bind(this)
     this.camera = null
     this.state = {
       image: "",
@@ -48,13 +49,22 @@ export default class App extends Component {
       takeOnPi: true,
       pics: [],
     }
+  }
+
+  componentDidMount() {
     this.turnOnSocket()
   }
 
   turnOnSocket() {
     socket.on("connect", () => console.log("connected"))
     socket.on("motion response", data => console.log(data))
-    socket.on("detector running", data => this.addPic(data))
+    socket.on("detector running", data => {
+      console.log(data)
+      let {pics} = this.state
+      pics.push(data.pic)
+
+      this.setState({pics})
+    })
     socket.on("disconnect", () => console.log("disconnected :("))
   }
 
@@ -74,7 +84,7 @@ export default class App extends Component {
   turnOnMotion() {
     if (this.state.motionDetector === "on") {
       socket.emit("motion", "off")
-      this.setState({motionDetector: "off"})
+      this.setState({pics: [], motionDetector: "off"})
     } else {
       socket.emit("motion", "on")
       this.setState({motionDetector: "on"})
@@ -83,6 +93,7 @@ export default class App extends Component {
 
   addPic(data) {
     const {pic} = data
+    console.log("adding Pic!!!!")
     this.setState(prevState => {
       pics: prevState.pics.push(pic)
     })
@@ -143,7 +154,7 @@ export default class App extends Component {
           )}
           <img style={imgStyle} src={this.state.image} />
         </div>
-        {pics.length > 0 && this.renderPicStream(pics)}
+        {this.renderPicStream(pics)}
         <button style={buttonStyle} onClick={this.handleClick}>
           TAKE PICTURE
         </button>
