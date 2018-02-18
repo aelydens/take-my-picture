@@ -39,15 +39,20 @@ export default class App extends Component {
     super(props)
     this.handleClick = this.handleClick.bind(this)
     this.chooseCam = this.chooseCam.bind(this)
+    this.turnOnMotion = this.turnOnMotion.bind(this)
     this.camera = null
     this.state = {
       image: "",
       webCam: false,
       takeOnPi: true,
     }
+    this.turnOnSocket()
+  }
+
+  turnOnSocket() {
     socket.on("connect", () => console.log("connected"))
-    socket.on("event", data => console.log(data))
     socket.on("motion response", data => console.log(data))
+    socket.on("detector running", data => console.log(data))
     socket.on("disconnect", () => console.log("disconnected :("))
   }
 
@@ -65,7 +70,13 @@ export default class App extends Component {
   }
 
   turnOnMotion() {
-    socket.emit("motion on", "hello world")
+    if (this.state.motionDetector === "on") {
+      socket.emit("motion", "off")
+      this.setState({motionDetector: "off"})
+    } else {
+      socket.emit("motion", "on")
+      this.setState({motionDetector: "on"})
+    }
   }
 
   handleClick() {
@@ -121,7 +132,8 @@ export default class App extends Component {
           TAKE PICTURE
         </button>
         <button style={buttonStyle} onClick={this.turnOnMotion}>
-          DETECT MOTION
+          TURN MOTION DETECTOR{" "}
+          {this.state.motionDetector === "on" ? "OFF" : "ON"}
         </button>
       </div>
     )
