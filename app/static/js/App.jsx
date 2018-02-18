@@ -40,11 +40,13 @@ export default class App extends Component {
     this.handleClick = this.handleClick.bind(this)
     this.chooseCam = this.chooseCam.bind(this)
     this.turnOnMotion = this.turnOnMotion.bind(this)
+    this.addPic = this.addPic.bind(this)
     this.camera = null
     this.state = {
       image: "",
       webCam: false,
       takeOnPi: true,
+      pics: [],
     }
     this.turnOnSocket()
   }
@@ -52,7 +54,7 @@ export default class App extends Component {
   turnOnSocket() {
     socket.on("connect", () => console.log("connected"))
     socket.on("motion response", data => console.log(data))
-    socket.on("detector running", data => console.log(data))
+    socket.on("detector running", data => this.addPic(data))
     socket.on("disconnect", () => console.log("disconnected :("))
   }
 
@@ -79,6 +81,13 @@ export default class App extends Component {
     }
   }
 
+  addPic(data) {
+    const {pic} = data
+    this.setState(prevState => {
+      pics: prevState.pics.push(pic)
+    })
+  }
+
   handleClick() {
     if (this.state.takeOnPi) {
       axios.get(`${process.env.RASPI_URL}/take`).then(resp => {
@@ -96,8 +105,14 @@ export default class App extends Component {
     }
   }
 
+  renderPicStream(pics) {
+    return pics.map(pic => {
+      return <img style={imgStyle} src={pic} />
+    })
+  }
+
   render() {
-    const {takeOnPi} = this.state
+    const {takeOnPi, pics} = this.state
     return (
       <div style={containerStyle}>
         <div style={piConditionalStyle}>
@@ -128,6 +143,7 @@ export default class App extends Component {
           )}
           <img style={imgStyle} src={this.state.image} />
         </div>
+        {pics.length > 0 && this.renderPicStream(pics)}
         <button style={buttonStyle} onClick={this.handleClick}>
           TAKE PICTURE
         </button>
