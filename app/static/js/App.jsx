@@ -1,6 +1,9 @@
 import React, {Component} from "react"
 import ReactCamera from "simple-react-camera"
 import axios from "axios"
+import io from "socket.io-client"
+
+const socket = io(process.env.RASPI_URL)
 
 const imgStyle = {
   height: "200px",
@@ -42,6 +45,10 @@ export default class App extends Component {
       webCam: false,
       takeOnPi: true,
     }
+    socket.on("connect", () => console.log("connected"))
+    socket.on("event", data => console.log(data))
+    socket.on("motion response", data => console.log(data))
+    socket.on("disconnect", () => console.log("disconnected :("))
   }
 
   chooseCam(cam) {
@@ -57,8 +64,11 @@ export default class App extends Component {
     }
   }
 
+  turnOnMotion() {
+    socket.emit("motion on", "hello world")
+  }
+
   handleClick() {
-    console.log(process.env.raspiurl)
     if (this.state.takeOnPi) {
       axios.get(`${process.env.RASPI_URL}/take`).then(resp => {
         this.setState({image: resp.data.data})
@@ -109,6 +119,9 @@ export default class App extends Component {
         </div>
         <button style={buttonStyle} onClick={this.handleClick}>
           TAKE PICTURE
+        </button>
+        <button style={buttonStyle} onClick={this.turnOnMotion}>
+          DETECT MOTION
         </button>
       </div>
     )
